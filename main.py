@@ -9,11 +9,14 @@ from agent import *
 class config(object):
     def __init__(self, env):
         super(config, self).__init__()
+        self.data_dir = "./data"
+        if not os.path.exists(self.data_dir):
+            os.system(f"mkdir {self.data_dir}")
 
         self.epochs = 10000
         self.batch_size = 256
         self.lr = 0.0003
-        self.save_dir = f"./{str(env)}_model_weights/"
+        self.save_dir = f"./data/{str(env)}_model_weights/"
         if not os.path.exists(self.save_dir):
             os.system(f"mkdir {self.save_dir}")
 
@@ -49,7 +52,7 @@ class config(object):
         self.beta_annealing = 0.0001
         self.eval_interval = 10000
 
-        self.log_dir = f"./{str(env)}_runs/"
+        self.log_dir = f"./data/{str(env)}_runs/"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
