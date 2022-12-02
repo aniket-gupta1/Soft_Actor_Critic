@@ -51,6 +51,7 @@ class SACAgent(object):
         self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=cfg.lr)
 
         # Video
+        self.record = True
         self.video_path = cfg.video_path
         self.video_episodes = cfg.video_episodes
 
@@ -60,7 +61,8 @@ class SACAgent(object):
             if epoch % self.eval_interval == 0:
                 self.evaluate()
                 self.save_models(epoch)
-                self.make_video(self.video_path + f"/epoch_{epoch}/", self.video_episodes)
+                if self.record:
+                    self.make_video(self.video_path + f"/epoch_{epoch}/", self.video_episodes)
 
     def train_episode(self, epoch):
         episode_reward = 0
