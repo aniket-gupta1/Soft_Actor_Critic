@@ -1,0 +1,49 @@
+env:
+  name: Humanoid-v4
+  state_shape: 376
+  action_shape: 4
+
+video:
+  video_episodes: 10
+  video_path: ./data/Humanoid_video
+
+Critic:
+  input_dim: 12
+  hidden_units: [256,256]
+  output_dim: 12
+  network: fcn
+
+Policy:
+  input_dim: 12
+  hidden_units: [256,256]
+  output_dim: 12
+  network: fcn
+
+data:
+  data_dir: ./data
+  save_dir: ./data/Humanoid_model_weights/
+
+training:
+  epochs: 10000
+  batch_size: 256
+  lr: 0.0003
+  exploration_epochs: 2000
+  grad_clip: null
+  gamma: 0.99
+  alpha: 0.6
+  beta: 0.4
+  beta_annealing: 0.0001
+  tau: 0.005
+
+n_step:
+  implement: False
+  n: 5
+
+evaluate:
+  eval_interval: 100
+
+memory:
+  capacity: 1000000
+
+
+

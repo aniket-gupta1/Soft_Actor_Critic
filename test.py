@@ -1,25 +1,16 @@
-import gym
-from gym.wrappers import RecordVideo
+import yaml
+import argparse
+from easydict import EasyDict
 
-# gym("Humanoid-v4", render_mode="rgb_array")
-env = gym.make("Humanoid-v4", render_mode="rgb_array")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--conf', type=str, default="./conf/Humanoid.yaml")
+    args = parser.parse_args()
 
-env = RecordVideo(env, "video/")
+    with open(args.conf) as file:
+        cfg = EasyDict(yaml.safe_load(file))
 
-for _ in range(10):
-    rewards = 0
-    steps = 0
-    done = False
-    _, _ = env.reset()
+    print(cfg.env.name)
+    cfg.env.name = "aniket"
+    print(cfg.env.name)
 
-    while not done:
-        env.start_video_recorder()
-        env.unwrapped.render()
-        action = env.action_space.sample()
-        _, reward, done, _, _ = env.step(action)
-        steps += 1
-        rewards += reward
-
-    print("Testing steps: {} rewards {}: ".format(steps, rewards))
-
-env.close()

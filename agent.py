@@ -1,4 +1,6 @@
 import os
+import time
+import gym
 from model import *
 from memory import *
 from torch.utils.tensorboard import SummaryWriter
@@ -8,6 +10,7 @@ class SACAgent(object):
     def __init__(self, env, cfg):
         super(SACAgent, self).__init__()
         self.env = env
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.policy = PolicyNetwork(cfg).to(self.device)
@@ -26,7 +29,7 @@ class SACAgent(object):
         self.memory = ReplayMemory(cfg, self.device)
 
         self.step_count = 0
-        self.writer = SummaryWriter(log_dir=cfg.log_dir)
+        self.writer = SummaryWriter()
 
         self.epochs = cfg.epochs
         self.save_dir = cfg.save_dir
@@ -47,12 +50,17 @@ class SACAgent(object):
         self.alpha = self.log_alpha.exp()
         self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=cfg.lr)
 
+        # Video
+        self.video_path = cfg.video_path
+        self.video_episodes = cfg.video_episodes
+
     def run(self):
         for epoch in range(self.epochs):
             self.train_episode(epoch)
             if epoch % self.eval_interval == 0:
                 self.evaluate()
-                self.save_models()
+                self.save_models(epoch)
+                self.make_video(self.video_path + f"/epoch_{epoch}/", self.video_episodes)
 
     def train_episode(self, epoch):
         episode_reward = 0
@@ -120,10 +128,10 @@ class SACAgent(object):
 
         return action.cpu().numpy().reshape(-1)
 
-    def save_models(self):
-        self.policy.save(os.path.join(self.save_dir, 'policy.pth'))
-        self.critic.save(os.path.join(self.save_dir, 'critic.pth'))
-        self.critic_target.save(os.path.join(self.save_dir, 'critic_target.pth'))
+    def save_models(self, epoch):
+        self.policy.save(os.path.join(self.save_dir, f'{epoch}_policy.pth'))
+        self.critic.save(os.path.join(self.save_dir, f'{epoch}_critic.pth'))
+        self.critic_target.save(os.path.join(self.save_dir, f'{epoch}_critic_target.pth'))
 
     def entropy_loss(self, entropies):
         entropy_loss = -torch.mean(
@@ -203,22 +211,28 @@ class SACAgent(object):
         print('-' * 60)
 
     def make_video(self, path, n=1):
+        print(n)
         env = RecordVideo(self.env, path)
 
-        for _ in range(n):
+        for i in range(n):
             rewards = 0
             steps = 0
             done = False
-            observation = env.reset()
-            while not done:
-                # env.unwrapped.render()
-                env.start_video_recorder()
-                action = self.act(0, observation, True)
-                observation, reward, done, _, _ = self.env.step(action)
+            observation, _ = env.reset()
+            env.start_video_recorder()
+
+            while True :
+                action = self.act(i, observation, True)
+                observation, reward, done, _, _ = env.step(action)
                 steps += 1
                 rewards += reward
 
-            print("Testing steps: {} rewards {}: ".format(steps, rewards))
+                if steps >= 1000 or done:
+                    break
+
+            print("-" * 80)
+            print("Episode steps: {} || Rewards {}: ".format(steps, rewards))
+            print("-" * 80)
 
         env.close()
 
