@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.distributions import Normal
+from torchvision.models import mnasnet1_0
 
 class QNetwork(nn.Module):
     def __init__(self, cfg):
