@@ -18,13 +18,13 @@ class config(object):
             os.system(f"mkdir {self.data_dir}")
 
         self.epochs = 10000
-        self.batch_size = 256
+        self.batch_size = 8
         self.lr = 0.0003
         self.save_dir = f"./data/{str(env)}_model_weights/"
         if not os.path.exists(self.save_dir):
             os.system(f"mkdir {self.save_dir}")
 
-        self.exploration_epochs = 5
+        self.exploration_epochs = 200
         self.grad_clip = None
 
         # memory
@@ -54,20 +54,21 @@ class config(object):
         self.alpha = 0.6
         self.beta = 0.4
         self.beta_annealing = 0.0001
-        self.eval_interval = 100
+        self.eval_interval = 200
 
         self.log_dir = f"./data/{str(env)}_runs/"
 
         self.video_episodes = 10
         self.video_path = f"./data/{str(env)}_video"
 
-        self.motion_batch = 8
+        self.motion_batch = 1
+        self.use_per = True
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', type=str, default="Carla")
-    parser.add_argument('--use_ckp', type=bool, default=True)
+    parser.add_argument('--use_ckp', type=bool, default=False)
     parser.add_argument('--vid_eps', type=int, default=10)
     args = parser.parse_args()
 
@@ -88,12 +89,19 @@ if __name__ == '__main__':
     cfg.video_episodes = args.vid_eps
 
     agent = SACAgent(env, cfg)
-    if args.use_ckp:
-        agent.policy.load(os.path.join(cfg.save_dir), "latest_policy.pth")
-        agent.critic.load(os.path.join(cfg.save_dir), "latest_critic.pth")
-        agent.critic_target.load(os.path.join(cfg.save_dir), "latest_critic_target.pth")
+    
+    # if args.use_ckp:
+    #     print(args.use_ckp)
+    #     agent.policy.load(os.path.join(cfg.save_dir, "latest_policy.pth"))
+    #     agent.critic.load(os.path.join(cfg.save_dir, "latest_critic.pth"))
+    #     agent.critic_target.load(os.path.join(cfg.save_dir, "latest_critic_target.pth"))
+    #     print("Checkpoiint loaded")
 
-    agent.run()
+    try:
+        agent.run()
+    except Exception as e:
+        print(e)
+        env.close_agents()
 
 
 

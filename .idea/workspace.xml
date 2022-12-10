@@ -9,11 +9,9 @@
       <change beforePath="$PROJECT_DIR$/Carla_scripts/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/Carla_scripts/agent.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Carla_scripts/carla_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/Carla_scripts/carla_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Carla_scripts/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Carla_scripts/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Carla_scripts/memory.py" beforeDir="false" afterPath="$PROJECT_DIR$/Carla_scripts/memory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Carla_scripts/test.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/agent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/memory.py" beforeDir="false" afterPath="$PROJECT_DIR$/memory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/play.py" beforeDir="false" afterPath="$PROJECT_DIR$/play.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_agent.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

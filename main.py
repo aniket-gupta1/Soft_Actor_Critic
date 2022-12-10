@@ -1,4 +1,5 @@
 import argparse
+import gym
 from agent import *
 
 class config(object):

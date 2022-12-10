@@ -1,8 +1,5 @@
 import os
 import time
-import gym
-import torch
-
 from model import *
 from memory import *
 from torch.utils.tensorboard import SummaryWriter
@@ -62,7 +59,6 @@ class SACAgent(object):
         self.record = cfg.record
         self.video_path = cfg.video_path
         self.video_episodes = cfg.video_episodes
-
 
     def run(self):
         for epoch in range(self.epochs):
@@ -128,6 +124,7 @@ class SACAgent(object):
                     self.memory.update_priority(indices, errors.cpu().numpy())
 
                 # Bookkeeping
+                self.step_count += 1
                 self.writer.add_scalar('loss/alpha', entropy_loss.detach().item(), self.step_count)
                 self.writer.add_scalar('loss/Q1', q1_loss.detach().item(), self.step_count)
                 self.writer.add_scalar('loss/Q2', q1_loss.detach().item(), self.step_count)
@@ -166,6 +163,10 @@ class SACAgent(object):
         self.policy.save(os.path.join(self.save_dir, f'{epoch}_policy.pth'))
         self.critic.save(os.path.join(self.save_dir, f'{epoch}_critic.pth'))
         self.critic_target.save(os.path.join(self.save_dir, f'{epoch}_critic_target.pth'))
+
+        self.policy.save(os.path.join(self.save_dir, f'latest_policy.pth'))
+        self.critic.save(os.path.join(self.save_dir, f'latest_critic.pth'))
+        self.critic_target.save(os.path.join(self.save_dir, f'latest_critic_target.pth'))
 
     def entropy_loss(self, entropies):
         entropy_loss = -torch.mean(
@@ -292,4 +293,3 @@ class SACAgent(object):
             for p in network.modules():
                 torch.nn.utils.clip_grad_norm_(p.parameters(), grad_clip)
         optim.step()
-

@@ -39,6 +39,11 @@ class carla_env():
         # Get the world
         self.world = self.client.get_world()
 
+        # Set the mode to synchronous
+        settings = self.world.get_settings()
+        settings.synchronous_mode = True 
+        self.world.apply_settings(settings)
+
         # Get the blueprint library
         self.blueprint_lib = self.world.get_blueprint_library()
 
@@ -64,7 +69,7 @@ class carla_env():
 
         # Keep track of steps taken so far
         self.ep_step = 0
-        self.max_allowed_steps = 1000
+        self.max_allowed_steps = 250
 
         # Define some constants
         self.action_space = Carla_Actions()
@@ -73,10 +78,15 @@ class carla_env():
         self.curr_image = None
         self.motion_batch = motion_batch
         self.state = deque()
-        self._max_episode_steps = 1000
+        self._max_episode_steps = 250
+
+        # Spawn points
+        self.spawn_pts = self.world.get_map().get_spawn_points()
 
     def reset(self):
         self.close_agents()
+        self.world.tick()
+
         # Reset step counter
         self.ep_step = 0
 
@@ -84,10 +94,20 @@ class carla_env():
         self.actors = []
 
         # Reset the ego_vehicle
-        transform = random.choice(self.world.get_map().get_spawn_points())
+        # transform = random.choice(self.world.get_map().get_spawn_points())
+        # transform = random.choice(self.spawn_pts)
+        transform = self.spawn_pts[0]
+        #print(transform)
         self.ego_vehicle = self.world.spawn_actor(self.ego_bp, transform)
+        #print("Spawned a car")
+        self.ego_vehicle.apply_control(carla.VehicleControl(manual_gear_shift=True, gear=1))
+        self.ego_vehicle.apply_control(carla.VehicleControl(manual_gear_shift=False))
         self.ego_vehicle.apply_control(carla.VehicleControl(throttle=1.0, brake=0.0))
-        time.sleep(4)
+        # print("sleeping now")
+        tic = time.time()
+        while(time.time()-tic <= 1):
+            self.world.tick()
+        # print("still sleeping")
         self.actors.append(self.ego_vehicle)
 
         # Reset the camera image
@@ -107,15 +127,18 @@ class carla_env():
         self.collision_sensor.listen(lambda  data: self._collision_callback(data))
 
         while len(self.state)!=self.motion_batch:
+            self.world.tick()
             time.sleep(0.001)
 
         return np.array(self.state), None
 
     def step(self, action):
+        self.world.tick()
         # Rescale actions
         action[0] = (action[0] + 1)/2
-        action[2] = (action[2] + 1)/2
+        action[2] = (action[2] + 1)/4
         action = np.float64(action)
+        print(action)
         # Update step counter
         self.ep_step += 1
         # Apply control to the vehicle based on the action
@@ -138,11 +161,13 @@ class carla_env():
 
         done = False
         if len(self.collision_history) != 0:
+            #print("Collision detected")
             self.close_agents()
             done = True
-            reward = -1
+            reward = 0
         else:
-            reward = -1 + v * 2/100
+            # reward = -1 + v * 2/100
+            reward = v/10
 
         if self.ep_step >= self.max_allowed_steps:
             done = True
@@ -150,6 +175,7 @@ class carla_env():
         return np.array(self.state), reward, done, None, None
 
     def close_agents(self):
+        self.world.tick()
         for actor in self.actors:
             if hasattr(actor, 'is_listening') and actor.is_listening:
                 actor.stop()
@@ -158,6 +184,9 @@ class carla_env():
                 actor.destroy()
 
         self.actor_list = []
+
+        self.world.tick()
+
 
         return None
 
