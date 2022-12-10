@@ -85,9 +85,7 @@ class carla_env():
 
         # Reset the ego_vehicle
         transform = random.choice(self.world.get_map().get_spawn_points())
-        print(transform)
         self.ego_vehicle = self.world.spawn_actor(self.ego_bp, transform)
-        print("Spawned a car")
         self.ego_vehicle.apply_control(carla.VehicleControl(throttle=1.0, brake=0.0))
         time.sleep(4)
         self.actors.append(self.ego_vehicle)
@@ -140,7 +138,6 @@ class carla_env():
 
         done = False
         if len(self.collision_history) != 0:
-            print("Collision detected")
             self.close_agents()
             done = True
             reward = -1

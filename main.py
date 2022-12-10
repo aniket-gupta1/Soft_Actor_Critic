@@ -1,12 +1,5 @@
-import torch
-import torch.nn as nn
-import os
 import argparse
-import time
-import gym
-import yaml
 from agent import *
-from easydict import EasyDict
 
 class config(object):
     def __init__(self, env):
@@ -22,7 +15,7 @@ class config(object):
         if not os.path.exists(self.save_dir):
             os.system(f"mkdir {self.save_dir}")
 
-        self.exploration_epochs = 2000
+        self.exploration_epochs = 200
         self.grad_clip = None
 
         # memory
@@ -52,12 +45,16 @@ class config(object):
         self.alpha = 0.6
         self.beta = 0.4
         self.beta_annealing = 0.0001
+        self.epsilon = 0.0001
         self.eval_interval = 100
 
         self.log_dir = f"./data/{str(env)}_runs/"
 
+        self.record = False
         self.video_episodes = 10
         self.video_path = f"./data/{str(env)}_video"
+
+        self.use_per = True
 
 
 if __name__ == '__main__':
@@ -85,26 +82,6 @@ if __name__ == '__main__':
 
     agent = SACAgent(env, cfg)
     agent.run()
-
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--conf', type=str, default="./conf/Humanoid.yaml")
-    # args = parser.parse_args()
-    #
-    # with open(args.conf) as file:
-    #     cfg = EasyDict(yaml.safe_load(file))
-    #
-    # env = gym.make(cfg.env.name, render_mode="rgb_array")
-    #
-    # # Change config params according to env states and actions
-    # cfg.env.state_shape = env.observation_space.shape
-    # cfg.env.action_shape = env.action_space.shape
-    # cfg.policy.input_dim = env.observation_space.shape[0]
-    # cfg.policy.output_dim = env.action_space.shape[0] * 2
-    # cfg.policy.hidden_units = [256, 256]
-    #
-    # cfg.critic.input_dim = env.observation_space.shape[0] + env.action_space.shape[0]
-    # cfg.critic.output_dim = 1
-    # cfg.critic.hidden_units = [256, 256]
 
 
 

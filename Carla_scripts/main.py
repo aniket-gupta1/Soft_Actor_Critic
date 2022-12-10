@@ -67,7 +67,7 @@ class config(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', type=str, default="Carla")
-    parser.add_argument('--use_ckp', type=bool, default=False)
+    parser.add_argument('--use_ckp', type=bool, default=True)
     parser.add_argument('--vid_eps', type=int, default=10)
     args = parser.parse_args()
 
@@ -88,6 +88,11 @@ if __name__ == '__main__':
     cfg.video_episodes = args.vid_eps
 
     agent = SACAgent(env, cfg)
+    if args.use_ckp:
+        agent.policy.load(os.path.join(cfg.save_dir), "latest_policy.pth")
+        agent.critic.load(os.path.join(cfg.save_dir), "latest_critic.pth")
+        agent.critic_target.load(os.path.join(cfg.save_dir), "latest_critic_target.pth")
+
     agent.run()
 
 

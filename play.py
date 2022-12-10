@@ -1,8 +1,5 @@
 import argparse
-import os
-import glob
 from moviepy.editor import *
-from natsort import natsorted
 from agent import *
 from model import *
 

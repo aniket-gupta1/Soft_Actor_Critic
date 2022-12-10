@@ -135,6 +135,10 @@ class SACAgent(object):
         self.critic.save(os.path.join(self.save_dir, f'{epoch}_critic.pth'))
         self.critic_target.save(os.path.join(self.save_dir, f'{epoch}_critic_target.pth'))
 
+        self.policy.save(os.path.join(self.save_dir, f'latest_policy.pth'))
+        self.critic.save(os.path.join(self.save_dir, f'latest_critic.pth'))
+        self.critic_target.save(os.path.join(self.save_dir, f'latest_critic_target.pth'))
+
     def entropy_loss(self, entropies):
         entropy_loss = -torch.mean(self.log_alpha * (self.target_entropy - entropies).detach())
         return entropy_loss

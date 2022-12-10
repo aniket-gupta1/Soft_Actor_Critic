@@ -1,6 +1,8 @@
 import os
 import time
 import gym
+import torch
+
 from model import *
 from memory import *
 from torch.utils.tensorboard import SummaryWriter
@@ -26,7 +28,13 @@ class SACAgent(object):
         self.critic_q1_optim = torch.optim.Adam(self.critic.Q1.parameters(), lr=cfg.lr)
         self.critic_q2_optim = torch.optim.Adam(self.critic.Q2.parameters(), lr=cfg.lr)
 
-        self.memory = ReplayMemory(cfg, self.device)
+        # Prioritized experience replay
+        self.use_per = cfg.use_per
+
+        if self.use_per:
+            self.memory = PER_ReplayMemory(cfg, self.device)
+        else:
+            self.memory = ReplayMemory(cfg, self.device)
 
         self.step_count = 0
         self.writer = SummaryWriter()
@@ -51,9 +59,10 @@ class SACAgent(object):
         self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=cfg.lr)
 
         # Video
-        self.record = True
+        self.record = cfg.record
         self.video_path = cfg.video_path
         self.video_episodes = cfg.video_episodes
+
 
     def run(self):
         for epoch in range(self.epochs):
@@ -63,6 +72,14 @@ class SACAgent(object):
                 self.save_models(epoch)
                 if self.record:
                     self.make_video(self.video_path + f"/epoch_{epoch}/", self.video_episodes)
+
+    def make_batch(self, state, action, reward, next_state, done):
+        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        action = torch.FloatTensor([action]).view(1, -1).to(self.device)
+        reward = torch.FloatTensor([reward]).unsqueeze(0).to(self.device)
+        next_state = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
+        done = torch.FloatTensor([done]).unsqueeze(0).to(self.device)
+        return state, action, reward, next_state, done
 
     def train_episode(self, epoch):
         episode_reward = 0
@@ -76,13 +93,24 @@ class SACAgent(object):
             episode_reward += reward
             episode_steps += 1
 
-            self.memory.append(state, action, reward, next_state, done)
+            if self.use_per:
+                batch = self.make_batch(state, action, reward, next_state, done)
+                with torch.no_grad():
+                    curr_q1, curr_q2 = self.current_q(*batch)
+                target_q = self.target_q(*batch)
+                error = torch.abs(curr_q1 - target_q).item()
+                self.memory.append(state, action, reward, next_state, done, error)
+            else:
+                self.memory.append(state, action, reward, next_state, done)
 
             # Check if memory can provide a batch and that we have done exploration epochs
             if self.memory.can_provide_sample() and epoch >= self.exploration_epochs:
                 self.soft_update(self.critic_target, self.critic, self.tau)
 
-                batch = self.memory.sample()
+                if self.use_per:
+                    batch, indices, weights = self.memory.sample()
+                else:
+                    batch = self.memory.sample()
                 q1_loss, q2_loss, errors, mean_q1, mean_q2 = self.critic_loss(batch)
                 policy_loss, entropies = self.policy_loss(batch)
 
@@ -94,6 +122,10 @@ class SACAgent(object):
                 entropy_loss = self.entropy_loss(entropies)
                 self.update_params(self.alpha_optim, None, entropy_loss)
                 self.alpha = self.log_alpha.exp()
+
+                # Update priority weights
+                if self.use_per:
+                    self.memory.update_priority(indices, errors.cpu().numpy())
 
                 # Bookkeeping
                 self.writer.add_scalar('loss/alpha', entropy_loss.detach().item(), self.step_count)
@@ -260,3 +292,4 @@ class SACAgent(object):
             for p in network.modules():
                 torch.nn.utils.clip_grad_norm_(p.parameters(), grad_clip)
         optim.step()
+
